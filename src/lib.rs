@@ -41,7 +41,7 @@ mod tests {
         let expected = regex::Regex::new(&format!("^({})$", &s1)[..]).unwrap().is_match(&s2);
 
         let rregex = RRegex::new(s1.clone())
-            .expect(&format!("Failed to create regex ({s1}). Regex parsed {expected}.")[..]);
+            .expect(&format!("Failed to create regex ('{s1}'). Regex parsed {expected}.")[..]);
 
         assert_eq!(
             rregex.matches(&s2),
@@ -50,20 +50,6 @@ mod tests {
             s1,
             s2
         );
-    }
-
-    #[test]
-    fn test_union() {
-        let test_regex = "a|b";
-        let test_strings = ["a", "b", "c"];
-        let expected_strings = [true, true, false];
-
-        let regex = RRegex::new(test_regex.to_string()).unwrap();
-
-        for (result, expected) in test_strings.iter().zip(expected_strings.iter()) {
-            let result = regex.matches(*result);
-            assert_eq!(result, *expected);
-        }
     }
 
     #[test]
@@ -80,7 +66,7 @@ mod tests {
     }
 
     #[test]
-    fn test_regex_union() {
+    fn test_union() {
         // Positive test cases
         test_matches("a|b", "a"); // "a" matches the first alternative
         test_matches("a|b", "b"); // "b" matches the second alternative
@@ -128,24 +114,60 @@ mod tests {
         test_matches("(|a)", "");          // Union with an empty alternative matches ""
     }
 
-    // #[test]
-    // fn test_regex_concatenation() {
-    //     // Positive test cases
-    //     test_matches("ab", "ab"); // "ab" matches the concatenation of "a" and "b"
-    //     test_matches("abc", "abc"); // Longer concatenation: "abc" matches exactly
-    //     test_matches("a|bc", "bc"); // Union with concatenation: "bc" matches the second alternative
+    #[test]
+    fn test_regex_concatenation() {
+        // Positive test cases
+        test_matches("ab", "ab"); // "ab" matches the concatenation of "a" and "b"
+        test_matches("abc", "abc"); // Longer concatenation: "abc" matches exactly
+        test_matches("a|bc", "bc"); // Union with concatenation: "bc" matches the second alternative
 
-    //     // Negative test cases
-    //     test_matches("ab", "a"); // "a" is incomplete; does not match "ab"
-    //     test_matches("ab", "b"); // "b" is incomplete; does not match "ab"
-    //     test_matches("ab", "ba"); // "ba" is out of order; does not match "ab"
-    //     test_matches("ab", ""); // Empty input does not match "ab"
+        // Negative test cases
+        test_matches("ab", "a"); // "a" is incomplete; does not match "ab"
+        test_matches("ab", "b"); // "b" is incomplete; does not match "ab"
+        test_matches("ab", "ba"); // "ba" is out of order; does not match "ab"
+        test_matches("ab", ""); // Empty input does not match "ab"
 
-    //     // Edge cases
-    //     test_matches("a", "a"); // Single character concatenation (trivial case)
-    //     test_matches("", ""); // Empty pattern matches empty input
-    //     test_matches("a", ""); // Non-empty pattern does not match empty input
-    //     test_matches("a*b", "aab"); // Concatenation with repetition: "a*b" matches "aab"
-    //     test_matches("a*b", "b"); // Concatenation with zero repetitions: "a*b" matches "b"
-    // }
+        // Edge cases
+        test_matches("a", "a"); // Single character concatenation (trivial case)
+        test_matches("", ""); // Empty pattern matches empty input
+        test_matches("a", ""); // Non-empty pattern does not match empty input
+        test_matches("a*b", "aab"); // Concatenation with repetition: "a*b" matches "aab"
+        test_matches("a*b", "b"); // Concatenation with zero repetitions: "a*b" matches "b"
+    }
+
+    #[test]
+    fn test_kleene_star() {
+        // Positive test cases
+        test_matches("a*", ""); // Empty string matches "a*" (zero occurrences of 'a')
+        test_matches("a*", "a"); // Single 'a' matches "a*"
+        test_matches("a*", "aa"); // Multiple 'a's match "a*"
+        test_matches("a*", "aaa"); // Even more 'a's still match "a*"
+        test_matches("(ab)*", ""); // Empty string matches "(ab)*" (zero occurrences of "ab")
+        test_matches("(ab)*", "ab"); // Single "ab" matches "(ab)*"
+        test_matches("(ab)*", "abab"); // Multiple "ab"s match "(ab)*"
+        test_matches("(ab)*", "ababab"); // Even more "ab"s still match "(ab)*"
+        test_matches("a*b", "b"); // Zero 'a's followed by 'b' matches "a*b"
+        test_matches("a*b", "ab"); // One 'a' followed by 'b' matches "a*b"
+        test_matches("a*b", "aab"); // Multiple 'a's followed by 'b' match "a*b"
+
+        // Negative test cases
+        test_matches("a*", "b"); // "b" does not match "a*"
+        test_matches("a*", "ba"); // "ba" does not match "a*"
+        test_matches("(ab)*", "a"); // "a" does not match "(ab)*"
+        test_matches("(ab)*", "abb"); // "abb" does not match "(ab)*"
+        test_matches("a*b", "aa"); // "aa" does not match "a*b" (missing 'b')
+
+        // Edge cases
+        test_matches("a*", " "); // Space does not match "a*"
+        test_matches("(a|b)*", ""); // Empty string matches "(a|b)*" (zero occurrences)
+        test_matches("(a|b)*", "a"); // Single 'a' matches "(a|b)*"
+        test_matches("(a|b)*", "b"); // Single 'b' matches "(a|b)*"
+        test_matches("(a|b)*", "ab"); // Alternating "ab" matches "(a|b)*"
+        test_matches("(a|b)*", "aba"); // Mixed sequence "aba" matches "(a|b)*"
+        test_matches("(a|b)*", "babab"); // Longer mixed sequence matches "(a|b)*"
+        test_matches("a*", "aaaaaa"); // Long sequence of 'a's matches "a*"
+        test_matches("(a*)*", ""); // Nested Kleene star matches empty string
+        test_matches("(a*)*", "a"); // Nested Kleene star matches single 'a'
+        test_matches("(a*)*", "aaaa"); // Nested Kleene star matches multiple 'a's
+    }
 }
