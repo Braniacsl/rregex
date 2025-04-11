@@ -18,8 +18,8 @@ pub struct RRegex {
 
 impl RRegex {
     pub fn new(regex: String) -> Result<Self, ParseError> {
-        let lexer = Lexer::new(regex);
-        let mut parser = Parser::new(lexer);
+        let mut lexer = Lexer::new(regex);
+        let mut parser = Parser::new(&mut lexer);
         let nfa = parser.parse()?;
         let matcher = Matcher::new(nfa);
 

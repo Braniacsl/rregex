@@ -66,6 +66,19 @@ impl Lexer{
             c => Some(Err(ParseError::UnexpectedToken(Token::Unknown(c?)))),
         }
     }
+
+    pub fn collect(&mut self) -> Option<Result<Vec<Token>, ParseError>> {
+        let mut collected = Vec::new();
+
+        while let Some(result) = self.next() {
+            match result {
+                Ok(token) => collected.push(token),
+                Err(e) => return Some(Err(e)),
+            }
+        }
+
+        Some(Ok(collected))
+    }
 }
 
 #[cfg(test)]
@@ -103,5 +116,14 @@ mod tests {
         let expected = Token::Literal('b');
 
         assert_eq!(peek_a, expected);
+    }
+
+    #[test]
+    fn test_lexer_collect() {
+        let mut lexer = Lexer::new("a|b".to_string());
+
+        let vec = lexer.collect().unwrap();
+
+        dbg!(vec);
     }
 }
