@@ -1,5 +1,5 @@
 use std::{collections::{HashSet, VecDeque}};
-use crate::parser::nfa::{NFA, StateID, Transition};
+use crate::nfa::{NFA, StateID, Transition};
 
 pub struct Matcher {
     nfa: NFA

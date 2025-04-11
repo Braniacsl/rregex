@@ -1,5 +1,5 @@
 use rregex::RRegex;
-use rregex::lexer::errors::ParseError;
+use rregex::ParseError;
 use std::env;
 
 fn main() -> Result<(), ParseError>{
@@ -12,6 +12,9 @@ fn main() -> Result<(), ParseError>{
         test_match("a|b", "a")?;
         test_match("a|b", "b")?;
         test_match("a|b", "c")?;
+        test_match("abc", "abc")?;
+        test_match("abc", "abcdef")?;
+        test_match("a*", "aaaaaaaaa")?;
     }
 
     Ok(())

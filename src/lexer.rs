@@ -1,15 +1,13 @@
-use crate::lexer::token::Token;
-use crate::lexer::errors::ParseError;
+use crate::token::Token;
+use crate::errors::ParseError;
 
-pub(crate) mod token;
-pub mod errors;
-
+#[derive(Debug)]
 enum LexerState{
     Empty,
     Peeked(Token),
-    Consumed,
 }
 
+#[derive(Debug)]
 pub struct Lexer{
     input: String,
     state: LexerState,
@@ -18,7 +16,7 @@ pub struct Lexer{
 impl Lexer{
     pub fn new(input: String) -> Self {
         Lexer {
-            input: input,
+            input: input.chars().rev().collect::<String>(),
             state: LexerState::Empty,
         }
     }
@@ -40,7 +38,6 @@ impl Lexer{
                 }
             },
             LexerState::Peeked(t) => Some(Ok(*t)),
-            LexerState::Consumed => None,
         }
     }
 
@@ -48,10 +45,9 @@ impl Lexer{
         match std::mem::replace(&mut self.state, LexerState::Empty) {
             LexerState::Empty => self.next_token(),
             LexerState::Peeked(t) => {
-                self.state = LexerState::Consumed;
+                self.state = LexerState::Empty;
                 Some(Ok(t))
             },
-            LexerState::Consumed => None,
         }
     }
 
@@ -72,3 +68,40 @@ impl Lexer{
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_peek_next(){
+        let regex = "a|b";
+        let mut lexer = Lexer::new(regex.to_string());
+
+        let result  = lexer.peek().expect("").unwrap();
+        let expected = Token::Literal('a');
+
+        assert_eq!(result, expected);
+
+        let result = lexer.next().expect("").unwrap();
+        
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_double_peek() {
+        let regex = "a|b";
+        let mut lexer = Lexer::new(regex.to_string());
+
+        lexer.next().expect("").unwrap();
+        dbg!(&lexer);
+        lexer.peek().expect("").unwrap();
+        dbg!(&lexer);
+        lexer.next().expect("").unwrap();
+        dbg!(&lexer);
+        let peek_a = lexer.peek().expect("").unwrap();
+        dbg!(&lexer);
+        let expected = Token::Literal('b');
+
+        assert_eq!(peek_a, expected);
+    }
+}

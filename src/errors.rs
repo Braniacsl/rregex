@@ -1,4 +1,4 @@
-use crate::lexer::token::Token;
+use crate::token::Token;
 
 
 #[derive(Debug)]
