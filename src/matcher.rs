@@ -38,8 +38,32 @@ impl Matcher {
     }
 
     pub fn copy_simulation(&self, input: &str) -> bool {
-        let _a = input == "h";
-        unimplemented!()
+        let mut active_copies = VecDeque::new();
+
+        self.spawn_recursive_copies(self.nfa.start_state, &mut active_copies);
+
+        for ch in input.chars() {
+            let mut next_copies = VecDeque::new();
+
+            while let Some(current_state) = active_copies.pop_front() {
+                if let Some(transitions) = self.nfa.transitions.get(&current_state) {
+                    for (transition, next_state) in transitions {
+                        match transition {
+                            Transition::Literal(c) if *c == ch => {
+                                self.spawn_recursive_copies(*next_state, &mut next_copies);
+                            },
+                            _ => {},
+                        }
+                    }
+                }
+            }
+
+            active_copies = next_copies;
+
+            if active_copies.is_empty() { return false }
+        }
+
+        active_copies.iter().any(|state| self.nfa.end_states.contains(state))
     }
 
     fn epsilon_closure(&self, states: HashSet<StateID>) -> HashSet<StateID> {
@@ -58,5 +82,19 @@ impl Matcher {
         }
 
         closure
+    }
+
+    fn spawn_recursive_copies(&self, state: StateID, copies: &mut VecDeque<StateID>) {
+        if copies.contains(&state) { return ;}
+
+        copies.push_back(state);
+
+        if let Some(transitions) = self.nfa.transitions.get(&state) {
+            for (transition, next_state) in transitions {
+                if matches!(transition, Transition::Epsilon) {
+                    self.spawn_recursive_copies(*next_state, copies);
+                }
+            }
+        }
     }
 }
