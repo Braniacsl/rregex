@@ -1,4 +1,4 @@
-use std::{collections::{HashSet, VecDeque}};
+use std::collections::{HashSet, VecDeque};
 use crate::nfa::{NFA, StateID, Transition};
 
 pub struct Matcher {
@@ -10,39 +10,41 @@ impl Matcher {
         Matcher { nfa }
     }
 
-    pub fn matches(&self, input: &str) -> bool {
+    pub fn set_simulation(&self, input: &str) -> bool {
         let mut current_states = self.epsilon_closure(
-            &HashSet::from([self.nfa.start_state]));
+            HashSet::from([self.nfa.start_state])
+        );
 
         for ch in input.chars() {
-            let mut next_states = HashSet::new();
+            let mut next_states= HashSet::new();
 
             for &state in &current_states {
                 if let Some(transitions) = self.nfa.transitions.get(&state) {
                     for (transition, next_state) in transitions {
                         match transition {
-                            Transition::Literal(c) if *c == ch => {
-                                next_states.insert(*next_state);
-                            },
+                            Transition::Literal(c) if *c == ch => { next_states.insert(*next_state); },
                             _ => {},
                         }
                     }
                 }
             }
 
-            current_states = self.epsilon_closure(&next_states);
+            current_states = self.epsilon_closure(next_states);
 
-            if current_states.is_empty() {
-                return false;
-            }
+            if current_states.is_empty() { return false }
         }
 
         current_states.iter().any(|state| self.nfa.end_states.contains(state))
     }
 
-    pub fn epsilon_closure(&self, states: &HashSet<StateID>) -> HashSet<StateID> {
+    pub fn copy_simulation(&self, input: &str) -> bool {
+        let _a = input == "h";
+        unimplemented!()
+    }
+
+    fn epsilon_closure(&self, states: HashSet<StateID>) -> HashSet<StateID> {
         let mut closure = states.clone();
-        let mut stack = VecDeque::from_iter(states.iter().clone());
+        let mut stack = VecDeque::from_iter(states.iter());
 
         while let Some(state) = stack.pop_front() {
             if let Some(transitions) = self.nfa.transitions.get(&state) {

@@ -27,7 +27,8 @@ impl RRegex {
     }
 
     pub fn matches(&self, input: &str) -> bool {
-        self.matcher.matches(input)
+        self.matcher.set_simulation(input)
+        // self.matcher.copy_simulation(input)
     }
 }
 
